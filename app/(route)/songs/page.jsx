@@ -27,7 +27,7 @@ const Page = () => {
   const handleFetchSongs = async (query) => {
     setIsLoadingSongs(true);
     const newSongs = await fetchSongs({ query, limit });
-    const results = newSongs?.data?.results;
+    const results = newSongs?.data?.results || [];
     
     // Filter out duplicate songs based on ID
     setSongs((prevSongs) => {
