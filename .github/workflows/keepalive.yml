@@ -1,0 +1,29 @@
+name: Infrastructure Keep Alive
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *' # Runs once a day at midnight UTC
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ping Supabase Project
+        run: |
+          curl --fail \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
+            "https://rmkxqhxdjvxvzxjgdlaj.supabase.co/rest/v1/liked_songs?limit=1"
+            
+      - name: Keep Repo Alive
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          mkdir -p .github
+          echo "Last keep-alive: $(date)" > .github/keep-alive.txt
+          git add .github/keep-alive.txt
+          git commit -m "chore: keep alive $(date +%Y-%m-%d) [skip ci]" || echo "No changes to commit"
+          git push
