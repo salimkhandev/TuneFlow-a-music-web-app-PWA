@@ -1,0 +1,3 @@
+{
+  "ignoreCommand": "bash -c \"git log -1 --name-only | grep -v '.github/' | grep -q . && exit 1 || exit 0\""
+}
