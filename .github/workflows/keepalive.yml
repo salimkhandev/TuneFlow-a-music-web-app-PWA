@@ -25,5 +25,5 @@ jobs:
           mkdir -p .github
           echo "Last keep-alive: $(date)" > .github/keep-alive.txt
           git add .github/keep-alive.txt
-          git commit -m "chore: keep alive $(date +%Y-%m-%d) [skip ci]" || echo "No changes to commit"
+          git commit -m "[skip vercel] chore: keep alive $(date +%Y-%m-%d)" || echo "No changes to commit"
           git push
