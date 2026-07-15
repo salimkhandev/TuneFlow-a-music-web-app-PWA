@@ -14,32 +14,40 @@ export async function GET(request) {
     if (!pool) {
       return new Response(JSON.stringify({ items: [] }), { status: 200 });
     }
-    await ensureSchema();
+    
     const { searchParams } = new URL(request.url);
     const view = searchParams.get('view'); // ids | count | summary | full(default)
 
     if (view === 'ids') {
-      const { rows } = await pool.query(
-        "select song_id from liked_songs where user_email = $1 order by liked_at desc",
-        [session.user.email]
-      );
-      const ids = rows.map(r => r.song_id);
+      const { data, error } = await pool
+        .from('liked_songs')
+        .select('song_id')
+        .eq('user_email', session.user.email)
+        .order('liked_at', { ascending: false });
+        
+      if (error) throw error;
+      const ids = data.map(r => r.song_id);
       return new Response(JSON.stringify({ ids }), { status: 200 });
     }
 
     if (view === 'count') {
-      const { rows } = await pool.query(
-        "select count(*)::int as count from liked_songs where user_email = $1",
-        [session.user.email]
-      );
-      return new Response(JSON.stringify({ count: rows[0]?.count ?? 0 }), { status: 200 });
+      const { count, error } = await pool
+        .from('liked_songs')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_email', session.user.email);
+        
+      if (error) throw error;
+      return new Response(JSON.stringify({ count: count ?? 0 }), { status: 200 });
     }
 
-    const { rows } = await pool.query(
-      "select song_json as song from liked_songs where user_email = $1 order by liked_at desc",
-      [session.user.email]
-    );
-    const items = rows.map(r => r.song);
+    const { data, error } = await pool
+      .from('liked_songs')
+      .select('song_json')
+      .eq('user_email', session.user.email)
+      .order('liked_at', { ascending: false });
+      
+    if (error) throw error;
+    const items = data.map(r => r.song_json);
 
     if (view === 'summary') {
       const summary = items.map(s => ({
@@ -68,18 +76,26 @@ export async function POST(request) {
     if (!pool) {
       return new Response(JSON.stringify({ ok: false, message: "DB not configured" }), { status: 200 });
     }
-    await ensureSchema();
+    
     const payload = await request.json();
     const song = payload?.song;
     if (!song?.id) {
       return new Response(JSON.stringify({ error: "song.id required" }), { status: 400 });
     }
-    await pool.query(
-      `insert into liked_songs (user_email, song_id, song_json)
-       values ($1, $2, $3)
-       on conflict (user_email, song_id) do update set song_json = excluded.song_json, liked_at = now()`,
-      [session.user.email, String(song.id), song]
-    );
+    
+    const { error } = await pool
+      .from('liked_songs')
+      .upsert(
+        { 
+          user_email: session.user.email, 
+          song_id: String(song.id), 
+          song_json: song,
+          liked_at: new Date().toISOString()
+        },
+        { onConflict: 'user_email,song_id' }
+      );
+      
+    if (error) throw error;
     return new Response(JSON.stringify({ ok: true }), { status: 200 });
   } catch (err) {
     console.error("[liked-songs][POST] error", err);
@@ -96,22 +112,22 @@ export async function DELETE(request) {
     if (!pool) {
       return new Response(JSON.stringify({ ok: false, message: "DB not configured" }), { status: 200 });
     }
-    await ensureSchema();
+    
     const { searchParams } = new URL(request.url);
-    console.log('searchParams', searchParams);
     const songId = searchParams.get("songId");
     if (!songId) {
       return new Response(JSON.stringify({ error: "songId required" }), { status: 400 });
     }
-    await pool.query(
-      "delete from liked_songs where user_email = $1 and song_id = $2",
-      [session.user.email, String(songId)]
-    );
+    
+    const { error } = await pool
+      .from('liked_songs')
+      .delete()
+      .match({ user_email: session.user.email, song_id: String(songId) });
+      
+    if (error) throw error;
     return new Response(JSON.stringify({ ok: true }), { status: 200 });
   } catch (err) {
     console.error("[liked-songs][DELETE] error", err);
     return new Response(JSON.stringify({ error: String(err?.message || err) }), { status: 500 });
   }
 }
-
-
