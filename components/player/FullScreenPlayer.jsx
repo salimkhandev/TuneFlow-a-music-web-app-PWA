@@ -82,16 +82,18 @@ const FullScreenPlayer = ({ onClose }) => {
     // player is mounted, ANY popstate means the user wants to close the player.
     window.history.pushState({ __fsPlayer: true }, "", window.location.href);
 
-    const handlePopState = () => {
+    const handlePopState = (e) => {
+      // Prevent Next.js router from seeing this and forcing a route refresh
+      e.stopImmediatePropagation();
       onClose();
       // Do NOT re-push — we want the natural backward navigation to stick
       // so the OS/browser "back" gesture feels native.
     };
 
-    window.addEventListener("popstate", handlePopState);
+    window.addEventListener("popstate", handlePopState, true);
 
     return () => {
-      window.removeEventListener("popstate", handlePopState);
+      window.removeEventListener("popstate", handlePopState, true);
     };
   }, []);
 
@@ -310,7 +312,7 @@ const FullScreenPlayer = ({ onClose }) => {
         <Button
           variant="ghost"
           size="icon"
-          onClick={onClose}
+          onClick={() => window.history.back()}
           className="text-foreground bg-transparent active:bg-transparent focus:bg-transparent md:hover:bg-muted h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12"
         >
           <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6" />
