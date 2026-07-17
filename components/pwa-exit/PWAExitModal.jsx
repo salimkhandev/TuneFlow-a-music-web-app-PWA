@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 export default function PWAExitModal() {
   const [show, setShow] = useState(false);
   const showRef = useRef(false);
+  const isExitingRef = useRef(false);
   // During the deaf window we block ALL clicks at window-capture level so
   // the ghost click from the hardware back button cannot reach any element.
   const deafRef = useRef(null);
@@ -52,12 +53,13 @@ export default function PWAExitModal() {
     window.history.pushState({ __pwaActive: true }, "");
 
     const handlePopState = (e) => {
+      if (isExitingRef.current) return;
+
       // --- Case 1: back was pressed while the modal is already visible ---
-      // User is trying to "back out" of the modal; keep it open and re-trap.
+      // User is trying to "back out" of the modal; they want to force exit.
       if (showRef.current) {
-        // Stop Next.js from reacting to this pop
         e.stopImmediatePropagation();
-        window.history.pushState({ __pwaActive: true }, "");
+        confirmExit();
         return;
       }
 
@@ -80,13 +82,18 @@ export default function PWAExitModal() {
   }, []);
 
   const confirmExit = () => {
+    isExitingRef.current = true;
     closeModal();
-    // window.close() works in most Android/iOS PWA contexts
-    window.close();
-    // Fallback: go all the way back past the guard so the OS closes the view
+    
+    // Attempt standard window close (works in some PWA environments)
+    try {
+      window.close();
+    } catch (err) {}
+
+    // Fallback: forcefully navigate back past our guard state to trigger OS exit
     setTimeout(() => {
-      window.history.go(-(window.history.length));
-    }, 150);
+      window.history.go(-2);
+    }, 100);
   };
 
   const cancelExit = () => closeModal();
