@@ -116,6 +116,14 @@ const Page = () => {
       <h1 className="text-2xl font-bold">Songs</h1>
       {isLoadingSongs && songs.length === 0 ? (
         <Loader />
+      ) : songs.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 text-center gap-4">
+          <p className="text-xl font-semibold text-muted-foreground">No songs found.</p>
+          <p className="text-sm text-muted-foreground">The music API might be temporarily down or experiencing issues.</p>
+          <Button onClick={() => handleFetchSongs(currentQuery)} variant="outline">
+            Try Again
+          </Button>
+        </div>
       ) : (
         <>
           <SongList 
