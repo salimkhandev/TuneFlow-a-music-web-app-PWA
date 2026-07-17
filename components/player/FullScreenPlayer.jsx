@@ -76,27 +76,29 @@ const FullScreenPlayer = ({ onClose }) => {
     };
   }, []);
   useEffect(() => {
-    // Push a sentinel entry so the back button fires a popstate event instead
-    // of navigating the app away. The state tag helps debugging but we don't
-    // rely on it for detection — since this handler is only alive while the
-    // player is mounted, ANY popstate means the user wants to close the player.
-    const currentState = window.history.state || {};
-    window.history.pushState({ ...currentState, __fsPlayer: true }, "", window.location.href);
+    // Push a hash state. Next.js safely ignores hash changes, so this won't
+    // trigger a hard refresh when the hardware back button is pressed.
+    if (window.location.hash !== "#fs") {
+      window.history.pushState(null, "", window.location.pathname + window.location.search + "#fs");
+    }
 
-    const handlePopState = (e) => {
-      // Prevent Next.js router from seeing this and forcing a route refresh
-      e.stopImmediatePropagation();
-      onClose();
-      // Do NOT re-push — we want the natural backward navigation to stick
-      // so the OS/browser "back" gesture feels native.
+    const handlePopState = () => {
+      // If the hash is gone, the user pressed the back button.
+      if (window.location.hash !== "#fs") {
+        onClose();
+      }
     };
 
-    window.addEventListener("popstate", handlePopState, true);
+    window.addEventListener("popstate", handlePopState);
 
     return () => {
-      window.removeEventListener("popstate", handlePopState, true);
+      window.removeEventListener("popstate", handlePopState);
+      // Clean up the hash if the player is closed programmatically
+      if (window.location.hash === "#fs") {
+        window.history.back();
+      }
     };
-  }, []);
+  }, [onClose]);
 
   // RTK Query: read liked songs when user is authenticated
   const shouldFetchLiked = Boolean(session?.user?.email);
@@ -313,7 +315,7 @@ const FullScreenPlayer = ({ onClose }) => {
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => window.history.back()}
+          onClick={onClose}
           className="text-foreground bg-transparent active:bg-transparent focus:bg-transparent md:hover:bg-muted h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12"
         >
           <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6" />
