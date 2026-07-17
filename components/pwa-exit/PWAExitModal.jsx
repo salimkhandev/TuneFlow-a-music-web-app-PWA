@@ -42,8 +42,9 @@ export default function PWAExitModal() {
 
     if (!isPWA) return;
 
-    window.history.replaceState({ __pwaGuard: true }, "");
-    window.history.pushState({ __pwaActive: true }, "");
+    const currentState = window.history.state || {};
+    window.history.replaceState({ ...currentState, __pwaGuard: true }, "");
+    window.history.pushState({ ...currentState, __pwaActive: true }, "");
 
     const handlePopState = (e) => {
       // If we popped down to our guard entry
@@ -60,7 +61,8 @@ export default function PWAExitModal() {
         e.stopImmediatePropagation();
         openModal();
         // Trap them again
-        window.history.pushState({ __pwaActive: true }, "");
+        const currentState = window.history.state || {};
+        window.history.pushState({ ...currentState, __pwaActive: true }, "");
       }
     };
 

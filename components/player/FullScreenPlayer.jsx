@@ -80,7 +80,8 @@ const FullScreenPlayer = ({ onClose }) => {
     // of navigating the app away. The state tag helps debugging but we don't
     // rely on it for detection — since this handler is only alive while the
     // player is mounted, ANY popstate means the user wants to close the player.
-    window.history.pushState({ __fsPlayer: true }, "", window.location.href);
+    const currentState = window.history.state || {};
+    window.history.pushState({ ...currentState, __fsPlayer: true }, "", window.location.href);
 
     const handlePopState = (e) => {
       // Prevent Next.js router from seeing this and forcing a route refresh
