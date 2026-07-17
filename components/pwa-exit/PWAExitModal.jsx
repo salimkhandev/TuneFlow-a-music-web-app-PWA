@@ -1,10 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 
 export default function PWAExitModal() {
   const [show, setShow] = useState(false);
+  // Ref mirrors state so the event handler (closed over on mount) always sees
+  // the latest value without needing to re-register.
+  const showRef = useRef(false);
+
+  const openModal = () => {
+    showRef.current = true;
+    setShow(true);
+  };
+
+  const closeModal = () => {
+    showRef.current = false;
+    setShow(false);
+  };
 
   useEffect(() => {
     const isPWA =
@@ -13,48 +26,64 @@ export default function PWAExitModal() {
 
     if (!isPWA) return;
 
-    // Replace the initial entry with a clearly marked guard, then push a clean
-    // "active" entry on top. Navigation from Next.js / FullScreenPlayer always
-    // pushes entries ABOVE this pair, so popping down to the guard means the
-    // user has exhausted all real back-history and wants to leave the app.
+    // Replace the very first history entry with our guard marker (no URL
+    // change so Next.js won't attempt a client-side navigation), then push
+    // a clean "active" entry on top. All subsequent app navigations stack
+    // above these two entries.
     window.history.replaceState({ __pwaGuard: true }, "");
     window.history.pushState({ __pwaActive: true }, "");
 
     const handlePopState = (e) => {
-      // Only trigger when we land exactly on our guard entry
+      // --- Case 1: back was pressed while the modal is already visible ---
+      // User is trying to "back out" of the modal; keep it open and re-trap.
+      if (showRef.current) {
+        // Stop Next.js from reacting to this pop
+        e.stopImmediatePropagation();
+        window.history.pushState({ __pwaActive: true }, "");
+        return;
+      }
+
+      // --- Case 2: user reached our guard entry → show modal ---
       if (e.state && e.state.__pwaGuard === true) {
-        setShow(true);
-        // Re-push an active entry so the user stays trapped inside the app
+        // Capture the event so Next.js router never sees it; otherwise it would
+        // attempt a navigation and the resulting re-render resets React state,
+        // making the modal flash and disappear.
+        e.stopImmediatePropagation();
+        openModal();
+        // Re-push the active entry so the user is trapped above the guard
         window.history.pushState({ __pwaActive: true }, "");
       }
     };
 
-    window.addEventListener("popstate", handlePopState);
-    return () => window.removeEventListener("popstate", handlePopState);
+    // IMPORTANT: capture:true ensures we run BEFORE Next.js's bubble-phase
+    // listener, so stopImmediatePropagation() actually blocks Next.js.
+    window.addEventListener("popstate", handlePopState, true);
+    return () => window.removeEventListener("popstate", handlePopState, true);
   }, []);
 
   const confirmExit = () => {
-    setShow(false);
-    // window.close() works in many Android PWA contexts
+    closeModal();
+    // window.close() works in most Android/iOS PWA contexts
     window.close();
-    // Fallback: go back all the way so the OS closes the activity
+    // Fallback: go all the way back past the guard so the OS closes the view
     setTimeout(() => {
       window.history.go(-(window.history.length));
     }, 150);
   };
 
-  const cancelExit = () => setShow(false);
+  const cancelExit = () => closeModal();
 
   if (!show) return null;
 
   return (
+    // Tap outside = cancel
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
-      onClick={cancelExit} // tap outside = cancel
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-6 backdrop-blur-sm"
+      onClick={cancelExit}
     >
       <div
-        className="bg-card w-full max-w-sm rounded-xl p-6 shadow-2xl border border-border"
-        onClick={(e) => e.stopPropagation()} // prevent click-through
+        className="bg-card w-full max-w-sm rounded-2xl p-6 shadow-2xl border border-border"
+        onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-xl font-bold mb-2 text-foreground">Exit App?</h2>
         <p className="text-muted-foreground mb-6">
