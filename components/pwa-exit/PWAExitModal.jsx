@@ -5,27 +5,34 @@ import { Button } from "@/components/ui/button";
 
 export default function PWAExitModal() {
   const [show, setShow] = useState(false);
-  // Ref mirrors state so the event handler (closed over on mount) always sees
-  // the latest value without needing to re-register.
   const showRef = useRef(false);
-  // Blocks backdrop/button clicks for a short window after the modal opens,
-  // preventing the ghost-click from the hardware back button from instantly
-  // dismissing the modal.
-  const readyRef = useRef(false);
-  const readyTimer = useRef(null);
+  // During the deaf window we block ALL clicks at window-capture level so
+  // the ghost click from the hardware back button cannot reach any element.
+  const deafRef = useRef(null);
+
+  // Swallow every click/touch for 500ms at capture phase
+  const blockClicks = () => {
+    const absorb = (e) => {
+      e.stopImmediatePropagation();
+      e.preventDefault();
+    };
+    window.addEventListener('click',      absorb, true);
+    window.addEventListener('touchend',   absorb, true);
+    window.addEventListener('touchstart', absorb, true);
+    deafRef.current = setTimeout(() => {
+      window.removeEventListener('click',      absorb, true);
+      window.removeEventListener('touchend',   absorb, true);
+      window.removeEventListener('touchstart', absorb, true);
+    }, 500);
+  };
 
   const openModal = () => {
+    blockClicks();          // arm the deaf window FIRST
     showRef.current = true;
-    readyRef.current = false;
     setShow(true);
-    // Allow interactions only after 400 ms — enough to swallow the ghost click
-    // that the OS fires alongside the hardware back-button press.
-    clearTimeout(readyTimer.current);
-    readyTimer.current = setTimeout(() => { readyRef.current = true; }, 400);
   };
 
   const closeModal = () => {
-    if (!readyRef.current) return; // still in the deaf window
     showRef.current = false;
     setShow(false);
   };
