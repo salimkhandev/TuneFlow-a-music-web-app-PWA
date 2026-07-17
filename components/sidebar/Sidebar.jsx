@@ -6,6 +6,7 @@ import {
   GalleryHorizontalEnd,
   Heart,
   Home,
+  Info,
   ListMusic,
   Music,
   Users
@@ -40,6 +41,11 @@ const routes = [
     label: "Albums",
     icon: GalleryHorizontalEnd,
     href: "/albums",
+  },
+  {
+    label: "About Dev & App",
+    icon: Info,
+    href: "/about",
   }
 ];
 
@@ -74,14 +80,14 @@ export function Sidebar() {
     return () => window.removeEventListener("resize", checkScreenSize);
   }, [isClient]);
 
-  // Use only liked songs route when offline, all routes when online
-  const filteredRoutes = isOnline ? routes : [routes[1]]; // routes[1] is the liked songs route
+  // Use only liked songs and about routes when offline, all routes when online
+  const filteredRoutes = isOnline ? routes : [routes[1], routes[5]]; // routes[1] is liked songs, routes[5] is about
 
   return (
     <div className="flex  flex-col h-full bg-card w-full overflow-auto scrollbar-hidden">
       <div className="flex flex-row sm:flex-col gap-2 sm:p-4">
         {filteredRoutes.map((route) => (
-          <Link key={route.href} href={route.href} prefetch={true}>
+          <Link key={route.href} href={route.href}>
             <Button
               variant="ghost"
               className={cn(

@@ -38,6 +38,29 @@ const page = () => {
     return last?.url || null;
   };
 
+  if (isLoadingArtist || !artist) {
+    return (
+      <div className="flex flex-col gap-4 p-6 animate-pulse">
+        <div className="flex items-center gap-4 p-4 border rounded-xl">
+          <div className="h-20 w-20 sm:h-32 sm:w-32 rounded-full bg-muted shrink-0" />
+          <div className="flex flex-col gap-2 flex-1">
+            <div className="h-5 w-40 bg-muted rounded" />
+            <div className="h-4 w-24 bg-muted rounded" />
+            <div className="h-6 w-20 bg-muted rounded-full" />
+          </div>
+        </div>
+        <div className="h-6 w-16 bg-muted rounded" />
+        <div className="h-32 bg-muted rounded-xl" />
+        <div className="h-6 w-24 bg-muted rounded" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="h-16 bg-muted rounded-lg" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-4 p-6">
       <Card className="flex items-center gap-4 p-4">

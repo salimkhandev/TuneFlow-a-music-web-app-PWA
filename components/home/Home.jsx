@@ -120,7 +120,7 @@ const HomePage = () => {
         {isLoadingSongs ? <Loader /> : <SongList songs={songs} grid={true} likedSongs={likedSongs} onToggleLike={handleToggleLike} onDownload={handleDownload} />}
       </Suspense>
       <div className="w-full flex items-center justify-center">
-        <Link href={"/songs"} prefetch={true}>
+        <Link href={"/songs"}>
           <Button
             variant=""
             className="w-fit border border-border group transition-all"
@@ -136,7 +136,7 @@ const HomePage = () => {
         {isLoadingArtists ? <Loader /> : <ArtistsCrousel artists={artists} />}
       </Suspense>
       <div className="w-full flex items-center justify-center">
-        <Link href={"/artists"} prefetch={true}>
+        <Link href={"/artists"}>
           <Button
             variant=""
             className="w-fit border border-border group transition-all"
@@ -152,7 +152,7 @@ const HomePage = () => {
         {isLoadingAlbums ? <Loader /> : <AlbumsList albums={albums} />}
       </Suspense>
       <div className="w-full flex items-center justify-center">
-        <Link href={"/albums"} prefetch={true}>
+        <Link href={"/albums"}>
           <Button
             variant=""
             className="w-fit border border-border group transition-all"

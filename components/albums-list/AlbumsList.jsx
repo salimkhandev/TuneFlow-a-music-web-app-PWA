@@ -2,11 +2,11 @@ import { decodeHtmlEntities } from "@/lib/utils";
 import Link from "next/link";
 import { Card, CardContent } from "../ui/card";
 
-const AlbumsList = ({ albums }) => {
+const AlbumsList = ({ albums, onItemClick }) => {
   return (
     <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
       {albums?.map((album, i) => (
-        <Link href={`/albums/${album.id}`} key={i} prefetch={true}>
+        <Link href={`/albums/${album.id}`} key={i} onClick={onItemClick}>
           <Card className="overflow-hidden hover:opacity-75 transition">
             <CardContent className="p-0">
               <div className="aspect-square relative">

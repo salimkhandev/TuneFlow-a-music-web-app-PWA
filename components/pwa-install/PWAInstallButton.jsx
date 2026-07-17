@@ -1,24 +1,30 @@
 "use client";
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { X, Download } from "lucide-react";
 
 const InstallPWAButton = () => {
     const [deferredPrompt, setDeferredPrompt] = useState(null);
     const [isInstalled, setIsInstalled] = useState(false);
     const [isClient, setIsClient] = useState(false);
     const [isIOS, setIsIOS] = useState(false);
+    const [isBannerDismissed, setIsBannerDismissed] = useState(false);
 
     useEffect(() => {
-        // Ensure we're on the client side
         setIsClient(true);
         
-        // Check if app is already installed
+        // Read dismissed state from localStorage
+        const dismissed = localStorage.getItem("pwa_banner_dismissed");
+        if (dismissed === "true") {
+            setIsBannerDismissed(true);
+        }
+
         const checkInstalled = () => {
             if (typeof window !== 'undefined' && (window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true)) {
                 setIsInstalled(true);
             }
         };
 
-        // Check if iOS
         const checkIOS = () => {
             if (typeof window !== 'undefined') {
                 const userAgent = window.navigator.userAgent.toLowerCase();
@@ -29,7 +35,6 @@ const InstallPWAButton = () => {
         checkInstalled();
         checkIOS();
 
-        // Listen for beforeinstallprompt (Android & desktop)
         const handleBeforeInstallPrompt = (e) => {
             e.preventDefault(); // prevent auto prompt
             setDeferredPrompt(e);
@@ -38,7 +43,6 @@ const InstallPWAButton = () => {
         if (typeof window !== 'undefined') {
             window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
 
-            // Listen for appinstalled event
             const handleAppInstalled = () => {
                 setIsInstalled(true);
                 setDeferredPrompt(null);
@@ -52,36 +56,68 @@ const InstallPWAButton = () => {
         }
     }, []);
 
-    const handleInstall = () => {
+    const handleInstall = async () => {
         if (deferredPrompt) {
-            deferredPrompt.prompt(); // show native prompt
-            deferredPrompt.userChoice.then((choiceResult) => {
-                console.log("User choice:", choiceResult.outcome);
+            deferredPrompt.prompt();
+            const choiceResult = await deferredPrompt.userChoice;
+            console.log("User choice:", choiceResult.outcome);
+            if (choiceResult.outcome === "accepted") {
                 setDeferredPrompt(null);
-            });
+            }
         }
     };
 
-    // Don't render on server side
-    if (!isClient) return null;
-    
-    if (isInstalled) return null; // hide button if already installed
+    const handleDismiss = () => {
+        setIsBannerDismissed(true);
+        localStorage.setItem("pwa_banner_dismissed", "true");
+    };
+
+    if (!isClient || isInstalled) return null;
+    if (!deferredPrompt && !isIOS) return null; // Wait for prompt or iOS detection
 
     return (
-        <div className="fixed top-20 left-5 z-50">
-            {deferredPrompt ? (
-                <button
-                    onClick={handleInstall}
-                    className="px-4 py-2 bg-primary text-primary-foreground rounded-md shadow-md hover:opacity-90 transition-colors"
-                >
-                    Install App
-                </button>
-            ) : isIOS ? (
-                <div className="p-3 bg-card rounded-md shadow-md max-w-xs text-sm text-foreground">
-                    To install this app on iOS: Tap <span className="font-bold">Share</span> → <span className="font-bold">Add to Home Screen</span>
+        <>
+            {/* Top Banner State */}
+            {!isBannerDismissed && (
+                <div className="fixed top-0 left-0 right-0 z-50 bg-card border-b border-border p-3 sm:p-4 shadow-xl flex items-center justify-between gap-4 animate-in slide-in-from-top-4">
+                    <div className="flex items-center gap-3 overflow-hidden">
+                        <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center shrink-0">
+                            <span className="text-xl font-bold text-primary">T</span>
+                        </div>
+                        <div className="flex flex-col min-w-0">
+                            <span className="font-semibold text-sm sm:text-base truncate">TuneFlow Music</span>
+                            <span className="text-xs sm:text-sm text-muted-foreground truncate">
+                                {isIOS ? "Tap Share → Add to Home Screen" : "Listen offline, no browser needed"}
+                            </span>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                        {deferredPrompt && (
+                            <Button size="sm" onClick={handleInstall} className="rounded-full px-4 font-semibold shadow-md">
+                                Install
+                            </Button>
+                        )}
+                        <Button variant="ghost" size="icon" onClick={handleDismiss} className="text-muted-foreground hover:text-foreground h-8 w-8 rounded-full shrink-0">
+                            <X className="h-5 w-5" />
+                        </Button>
+                    </div>
                 </div>
-            ) : null}
-        </div>
+            )}
+
+            {/* Bottom Pill Chip State */}
+            {isBannerDismissed && deferredPrompt && (
+                <div className="fixed bottom-[100px] md:bottom-28 right-4 z-50 animate-in fade-in zoom-in-95 duration-300">
+                    <Button 
+                        onClick={handleInstall}
+                        size="sm"
+                        className="rounded-full shadow-lg border border-primary/20 bg-card hover:bg-card/90 text-foreground flex items-center gap-2 px-4 py-5"
+                    >
+                        <Download className="h-4 w-4 text-primary" />
+                        <span className="font-medium text-sm">Install App</span>
+                    </Button>
+                </div>
+            )}
+        </>
     );
 };
 

@@ -83,7 +83,7 @@ const SongItem = memo(({
 
 SongItem.displayName = 'SongItem';
 
-export function SongList({ songs = [], grid = false, likedSongs = [], onToggleLike, onDownload }) {
+export function SongList({ songs = [], grid = false, likedSongs = [], onToggleLike, onDownload, onItemClick }) {
   const dispatch = useDispatch();
   const { currentSong, isPlaying, queue } = useSelector(
     (state) => state.player
@@ -126,7 +126,10 @@ export function SongList({ songs = [], grid = false, likedSongs = [], onToggleLi
         window.dispatchEvent(new Event('userInteraction'));
       }
     }
-  }, [currentSong?.id, dispatch, queue, songs]);
+    if (onItemClick) {
+      onItemClick();
+    }
+  }, [currentSong?.id, dispatch, queue, songs, onItemClick]);
 
   return (
     <div

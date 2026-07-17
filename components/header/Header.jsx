@@ -28,8 +28,9 @@ import {
   removeFromSearchHistory,
 } from "@/lib/utils";
 import { debounce } from "lodash";
-import { Clock, LogOut, Music, Search, User, WifiOff, X } from "lucide-react";
+import { Clock, Info, LogOut, Music, Search, User, WifiOff, X } from "lucide-react";
 import { signIn, signOut, useSession } from "next-auth/react";
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import AlbumsList from "../albums-list/AlbumsList";
@@ -283,6 +284,12 @@ const Header = () => {
                   <CustomThemeSwitcher />
                 </div>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem asChild className="cursor-pointer">
+                  <Link href="/about" className="flex items-center w-full">
+                    <Info className="mr-2 h-4 w-4" />
+                    <span>About Dev & App</span>
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem
                   className="cursor-pointer"
                   onClick={() => signOut({ callbackUrl: "/" })}
@@ -306,30 +313,47 @@ const Header = () => {
 
       <Dialog
         open={isOpenSearchDialog}
-        onOpenChange={() => {
-          setIsOpenSearchDialog(false);
-          setQuery("");
-          setShowSuggestions(false);
-          // Reset all results when dialog closes
-          setSongs([]);
-          setArtists([]);
-          setAlbums([]);
+        onOpenChange={(open) => {
+          if (!open) {
+            setIsOpenSearchDialog(false);
+            setQuery("");
+            setShowSuggestions(false);
+            setSongs([]);
+            setArtists([]);
+            setAlbums([]);
+          }
         }}
-        className="md:min-w-[450px]"
       >
-        <DialogContent className="sm:max-w-3xl">
+        <DialogContent className="w-[95vw] max-w-full sm:max-w-2xl md:max-w-3xl p-4 sm:p-6 rounded-2xl sm:rounded-2xl max-h-[90vh] flex flex-col overflow-hidden">
           <DialogHeader>
             <DialogTitle>Search</DialogTitle>
             <DialogDescription>
               Search songs, artists, or albums...
             </DialogDescription>
           </DialogHeader>
-          <div className="relative">
-          <Input
-            placeholder="Type songs, artists, or albums..."
-            value={query}
+          <div className="relative mt-2">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
+            <Input
+              autoFocus
+              placeholder="What do you want to listen to?"
+              value={query}
               onChange={(e) => handleSearchChange(e.target.value)}
+              className="pl-10 pr-10 py-6 text-base sm:text-lg rounded-xl bg-muted/50 border-border/50 focus-visible:ring-1 focus-visible:ring-primary/50 transition-all"
             />
+            {query && (
+              <button 
+                onClick={() => {
+                  setQuery("");
+                  setShowSuggestions(false);
+                  setSongs([]);
+                  setArtists([]);
+                  setAlbums([]);
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            )}
             
             {/* Search Suggestions Dropdown */}
             {showSuggestions && searchSuggestions.length > 0 && (
@@ -369,47 +393,52 @@ const Header = () => {
               </div>
             )}
           </div>
-          <ScrollArea className="h-80 flex flex-col gap-4">
-            {/* Songs Section */}
-            <div className="flex flex-col gap-2">
-              <h1 className="font-semibold">Songs</h1>
-              {isLoadingSongs ? (
-                <Loader />
-              ) : (
-                <SongList songs={songs} grid={true} />
-              )}
-              {!isLoadingSongs && songs?.length === 0 && (
-                <p className="text-center">No songs found</p>
-              )}
-            </div>
-
+          <ScrollArea className="flex-1 h-[60vh] md:h-[500px] pr-2 sm:pr-4 mt-2 sm:mt-4">
             
+            {!query.trim() && searchSuggestions.length === 0 && (
+              <div className="flex flex-col items-center justify-center h-full text-center py-16 opacity-60">
+                <Search className="w-12 h-12 mb-4 text-muted-foreground" />
+                <h2 className="text-xl font-semibold">Ready to listen?</h2>
+                <p className="text-sm mt-2">Search for your favorite songs, artists, or albums.</p>
+              </div>
+            )}
+            
+            {query.trim() && !isLoadingSongs && !isLoadingArtists && !isLoadingAlbums && songs?.length === 0 && artists?.length === 0 && albums?.length === 0 && (
+              <div className="flex flex-col items-center justify-center h-full text-center py-16 opacity-60">
+                <Music className="w-12 h-12 mb-4 text-muted-foreground" />
+                <h2 className="text-xl font-semibold">No results found for "{query}"</h2>
+                <p className="text-sm mt-2">Please make sure your words are spelled correctly or use fewer or different keywords.</p>
+              </div>
+            )}
 
-            {/* Artists Section */}
-            <div className="flex flex-col gap-2">
-              <h1 className="font-semibold">Artists</h1>
-              {isLoadingArtists ? (
-                <Loader />
-              ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                  {artists?.map((artist, i) => (
-                    <ArtistCard key={i} artist={artist} />
-                  ))}
-                </div>
-              )}
-              {!isLoadingArtists && artists?.length === 0 && (
-                <p className="text-center">No artists found</p>
-              )}
-            </div>
+            {(isLoadingSongs || songs?.length > 0) && (
+              <div className="flex flex-col gap-3 mb-8">
+                <h1 className="font-semibold text-lg border-b pb-2">Songs</h1>
+                {isLoadingSongs ? <Loader /> : <SongList songs={songs} grid={true} onItemClick={() => setIsOpenSearchDialog(false)} />}
+              </div>
+            )}
 
-            {/* Albums Section */}
-            <div className="flex flex-col gap-2">
-              <h1 className="font-semibold">Albums</h1>
-              {isLoadingAlbums ? <Loader /> : <AlbumsList albums={albums} />}
-              {!isLoadingAlbums && albums?.length === 0 && (
-                <p className="text-center">No albums found</p>
-              )}
-            </div>
+            {(isLoadingArtists || artists?.length > 0) && (
+              <div className="flex flex-col gap-3 mb-8">
+                <h1 className="font-semibold text-lg border-b pb-2">Artists</h1>
+                {isLoadingArtists ? (
+                  <Loader />
+                ) : (
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {artists?.map((artist, i) => (
+                      <ArtistCard key={i} artist={artist} onItemClick={() => setIsOpenSearchDialog(false)} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {(isLoadingAlbums || albums?.length > 0) && (
+              <div className="flex flex-col gap-3 mb-8">
+                <h1 className="font-semibold text-lg border-b pb-2">Albums</h1>
+                {isLoadingAlbums ? <Loader /> : <AlbumsList albums={albums} onItemClick={() => setIsOpenSearchDialog(false)} />}
+              </div>
+            )}
           </ScrollArea>
         </DialogContent>
       </Dialog>

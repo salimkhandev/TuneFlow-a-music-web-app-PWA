@@ -15,6 +15,7 @@ import {
   setProgress,
   setVolume,
   togglePlayPause,
+  toggleMute
 } from "@/lib/slices/playerSlice";
 import { getOfflineAudio, isAudioOffline, removeAudioOffline } from "@/lib/utils";
 import {
@@ -23,6 +24,7 @@ import {
   SkipBack,
   SkipForward,
   Volume2,
+  VolumeX,
   X
 } from "lucide-react";
 import { signIn, useSession } from "next-auth/react";
@@ -36,13 +38,14 @@ import FullScreenPlayer from "./FullScreenPlayer";
 const Player = () => {
   const dispatch = useDispatch();
   const { data: session } = useSession();
-  const { currentSong, isPlaying, volume, progress, queue, queueIndex, isBottomPlayerVisible} =
+  const { currentSong, isPlaying, volume, progress, queue, queueIndex, isBottomPlayerVisible, repeatMode, isMuted} =
     useSelector((state) => state.player);
   const { netAvail: isOnline } = useSelector((state) => state.network);
   const audioRef = useRef(null);
   const animationRef = useRef(null);
   const isLoadingRef = useRef(false);
   const pendingPlayRef = useRef(false);
+  const lastDispatchedProgressRef = useRef(progress);
   const [localProgress, setLocalProgress] = useState(0);
   const [isClient, setIsClient] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
@@ -63,6 +66,7 @@ const Player = () => {
   // Reset local progress when current song changes
   useEffect(() => {
     setLocalProgress(0);
+    lastDispatchedProgressRef.current = 0;
   }, [currentSong]);
 
   // Track user interaction for autoplay policy
@@ -214,9 +218,9 @@ const Player = () => {
   // Handle volume changes
   useEffect(() => {
     if (audioRef.current) {
-      audioRef.current.volume = volume / 100;
+      audioRef.current.volume = isMuted ? 0 : volume / 100;
     }
-  }, [volume]);
+  }, [volume, isMuted]);
 
   // Mirror global isPlaying to the single audio element (no reloads here)
   useEffect(() => {
@@ -236,23 +240,24 @@ const Player = () => {
   }, [isPlaying]);
 
   // Function to update progress smoothly
-  const updateProgress = () => {
+  const updateProgress = useCallback(() => {
     if (!audioRef.current) return;
 
     const duration = audioRef.current.duration;
-    if (!isNaN(duration)) {
+    if (!isNaN(duration) && duration > 0) {
       const calculatedProgress =
         (audioRef.current.currentTime / duration) * 100;
       setLocalProgress(calculatedProgress);
 
       // Update Redux only when there's a significant change (reducing unnecessary re-renders)
-      if (Math.abs(calculatedProgress - progress) > 0.5) {
+      if (Math.abs(calculatedProgress - lastDispatchedProgressRef.current) > 0.5) {
+        lastDispatchedProgressRef.current = calculatedProgress;
         dispatch(setProgress(calculatedProgress));
       }
     }
 
     animationRef.current = requestAnimationFrame(updateProgress);
-  };
+  }, [dispatch]);
 
   // Start progress animation when song is playing
   useEffect(() => {
@@ -265,7 +270,7 @@ const Player = () => {
     return () => {
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
     };
-  }, [isPlaying]);
+  }, [isPlaying, updateProgress]);
 
   // Sync local progress with Redux when seeking
   const handleProgressChange = (value) => {
@@ -277,18 +282,35 @@ const Player = () => {
     }
 
     setLocalProgress(value[0]);
+    lastDispatchedProgressRef.current = value[0];
     dispatch(setProgress(value[0]));
   };
 
   // Handle song ending - play next song
   const handleSongEnd = () => {
     dispatch(setProgress(0));
-    // If we have more songs in the queue, play the next one
-    if (queue.length > 1) {
-      dispatch(nextSong());
-    } else {
-      // If we don't have more songs, just stop playing
-      dispatch(togglePlayPause());
+    
+    if (repeatMode === 2) {
+      // Repeat One
+      if (audioRef.current) {
+        audioRef.current.currentTime = 0;
+        audioRef.current.play().catch(() => {});
+      }
+      return;
+    }
+
+    if (queue.length > 0) {
+      if (repeatMode === 1) {
+        // Repeat All
+        dispatch(nextSong());
+      } else {
+        // No Repeat - only go to next if not at the end
+        if (queueIndex < queue.length - 1) {
+          dispatch(nextSong());
+        } else {
+          dispatch(togglePlayPause());
+        }
+      }
     }
   };
 
@@ -318,24 +340,6 @@ const Player = () => {
   // Check if next/prev buttons should be disabled
   const isQueueEmpty = !queue || queue.length === 0;
 
-  // // Show full-screen player if active
-  if (showFullScreen && currentSong) {
-    return (
-      <>
-        {/* Keep a persistent, hidden audio element mounted at all times */}
-        <div className="hidden">
-          <audio ref={audioRef} onEnded={handleSongEnd} preload="auto" crossOrigin="anonymous" />
-        </div>
-        <FullScreenPlayer
-          onClose={() => {
-            setShowFullScreen(false);
-            // Ensure the song continues playing in the background
-            // The bottom player will automatically resume playing
-          }}
-        />
-      </>
-    );
-  }
 
   // Show loading state during hydration to prevent mismatch
   if (!isHydrated) {
@@ -369,11 +373,18 @@ const Player = () => {
 
   return (
     <>
-      {/* Persistent, hidden audio element to keep playback/progress alive even when UI is hidden */}
+      {/* Persistent hidden audio element — always mounted */}
       <div className="hidden">
         <audio ref={audioRef} onEnded={handleSongEnd} preload="auto" crossOrigin="anonymous" />
       </div>
-    
+
+      {/* FullScreenPlayer as a fixed overlay so it never blocks sidebar/navigation */}
+      {showFullScreen && currentSong && (
+        <FullScreenPlayer
+          onClose={() => setShowFullScreen(false)}
+        />
+      )}
+
       {isBottomPlayerVisible && (
        <div className="relative w-full bg-background p-3 border-t flex flex-col cursor-pointer md:hover:bg-muted/50 transition-colors" onClick={() => currentSong && setShowFullScreen(true)} >
           {/* Audio Element URL (debug/link) */}
@@ -476,7 +487,9 @@ const Player = () => {
 
           {/* Right: Volume Control */}
           <div className="hidden sm:flex items-center gap-2 flex-1 justify-end" onClick={(e) => e.stopPropagation()}>
-            <Volume2 className="h-5 w-5 text-muted-foreground" />
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => dispatch(toggleMute())}>
+               {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+            </Button>
             <Slider
               className="w-24"
               value={[volume]}
