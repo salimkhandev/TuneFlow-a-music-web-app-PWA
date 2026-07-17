@@ -76,16 +76,16 @@ const FullScreenPlayer = ({ onClose }) => {
     };
   }, []);
   useEffect(() => {
-    // Push a tagged entry so the back button closes the player instead of
-    // navigating away. Using a specific tag avoids collisions with the
-    // PWAExitModal guard state which checks for __pwaGuard.
+    // Push a sentinel entry so the back button fires a popstate event instead
+    // of navigating the app away. The state tag helps debugging but we don't
+    // rely on it for detection — since this handler is only alive while the
+    // player is mounted, ANY popstate means the user wants to close the player.
     window.history.pushState({ __fsPlayer: true }, "", window.location.href);
 
-    const handlePopState = (event) => {
-      // Only close the player; don't act on unrelated history pops
-      if (!event.state || event.state.__fsPlayer !== true) return;
+    const handlePopState = () => {
       onClose();
-      window.history.pushState({ __fsPlayer: true }, "", window.location.href);
+      // Do NOT re-push — we want the natural backward navigation to stick
+      // so the OS/browser "back" gesture feels native.
     };
 
     window.addEventListener("popstate", handlePopState);
