@@ -82,29 +82,32 @@ const FullScreenPlayer = ({ onClose }) => {
   }, [onClose]);
 
   useEffect(() => {
-    // Push a hash entry so the back button creates a popstate event instead
-    // of navigating away. Hash changes are URL-safe with Next.js.
     if (window.location.hash !== "#fs") {
       window.history.pushState(null, "", window.location.pathname + window.location.search + "#fs");
     }
 
     const handlePopState = (e) => {
       if (window.location.hash !== "#fs") {
-        // Capture phase + stopImmediatePropagation ensures Next.js never sees
-        // this event and never triggers a page refresh or route change.
+        // Prevent Next.js from processing this event and refreshing the page
         e.stopImmediatePropagation();
         onCloseRef.current();
       }
     };
 
-    // MUST be capture phase so we run BEFORE Next.js App Router's popstate handler
+    // Capture phase: run before Next.js App Router's popstate handler
     window.addEventListener("popstate", handlePopState, true);
 
     return () => {
       window.removeEventListener("popstate", handlePopState, true);
-      // Pop the #fs hash cleanly when player is closed via on-screen button
+      // Use replaceState (NOT history.back) to clean up the hash silently.
+      // history.back() fires a popstate which would cause the next mount to
+      // immediately close itself via the stale event.
       if (window.location.hash === "#fs") {
-        window.history.back();
+        window.history.replaceState(
+          null,
+          "",
+          window.location.pathname + window.location.search
+        );
       }
     };
   }, []);
@@ -324,7 +327,7 @@ const FullScreenPlayer = ({ onClose }) => {
         <Button
           variant="ghost"
           size="icon"
-          onClick={onClose}
+          onClick={() => window.history.back()}
           className="text-foreground bg-transparent active:bg-transparent focus:bg-transparent md:hover:bg-muted h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12"
         >
           <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6" />
