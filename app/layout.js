@@ -4,6 +4,7 @@ import Header from "@/components/header/Header";
 import { NetworkDetector } from '@/components/NetworkDetector/NetworkDetector';
 import Player from "@/components/player/Player";
 import PWAInstallButton from "@/components/pwa-install/PWAInstallButton";
+import PWAExitModal from "@/components/pwa-exit/PWAExitModal";
 import ServiceWorker from "@/components/ServiceWorker";
 import AppSessionProvider from "@/components/session-provider/SessionProvider";
 import { Sidebar } from "@/components/sidebar/Sidebar";
@@ -130,6 +131,7 @@ export default function RootLayout({ children }) {
                 <Player />
               </div>
               <PWAInstallButton />
+              <PWAExitModal />
 
             </CustomThemeProvider>
           </ThemeProvider>

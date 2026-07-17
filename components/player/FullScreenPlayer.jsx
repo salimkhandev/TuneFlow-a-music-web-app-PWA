@@ -17,7 +17,7 @@ import {
   toggleShuffle,
   toggleMute
 } from "@/lib/slices/playerSlice";
-import { getAllOfflineAudio, getOfflineAudioCount, getOfflineAudioSize, isAudioOffline, removeAudioOffline } from "@/lib/utils";
+import { getAllOfflineAudio, getOfflineAudioCount, getOfflineAudioSize, isAudioOffline, removeAudioOffline, decodeHtmlEntities } from "@/lib/utils";
 import {
   ArrowLeft,
   Heart,
@@ -76,12 +76,16 @@ const FullScreenPlayer = ({ onClose }) => {
     };
   }, []);
   useEffect(() => {
-    // Push a dummy state so that back button triggers popstate
-    window.history.pushState(null, "", window.location.href);
+    // Push a tagged entry so the back button closes the player instead of
+    // navigating away. Using a specific tag avoids collisions with the
+    // PWAExitModal guard state which checks for __pwaGuard.
+    window.history.pushState({ __fsPlayer: true }, "", window.location.href);
 
     const handlePopState = (event) => {
+      // Only close the player; don't act on unrelated history pops
+      if (!event.state || event.state.__fsPlayer !== true) return;
       onClose();
-      window.history.pushState(null, "", window.location.href);
+      window.history.pushState({ __fsPlayer: true }, "", window.location.href);
     };
 
     window.addEventListener("popstate", handlePopState);
@@ -341,11 +345,11 @@ const FullScreenPlayer = ({ onClose }) => {
         {/* Song Info (Strong Typography) */}
         <div className="text-center max-w-sm sm:max-w-md px-2 sm:px-4 flex-shrink-0 w-full flex flex-col items-center">
           <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-foreground mb-1 line-clamp-2 bg-clip-text text-transparent bg-gradient-to-br from-foreground to-foreground/70">
-            {currentSong?.name || "No Song Playing"}
+            {decodeHtmlEntities(currentSong?.name) || "No Song Playing"}
           </h1>
           <p className="text-xs sm:text-sm md:text-base font-medium text-primary/80 line-clamp-1 mb-1">
             {currentSong?.artists?.primary
-              ?.map((artist) => artist.name)
+              ?.map((artist) => decodeHtmlEntities(artist.name))
               .join(", ") || "Artist Name"}
           </p>
 

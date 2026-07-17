@@ -29,10 +29,29 @@ const Page = () => {
     const newSongs = await fetchSongs({ query, limit });
     const results = newSongs?.data?.results || [];
     
-    // Filter out duplicate songs based on ID
+    // Filter out duplicate songs based on ID and Title + Artist
     setSongs((prevSongs) => {
+      const getSongKey = (song) => {
+        const name = song?.name?.toLowerCase().trim() || "";
+        const artist = song?.artists?.primary?.map(a => a.name).join(",").toLowerCase().trim() || "";
+        return `${name}|${artist}`;
+      };
+
       const existingIds = new Set(prevSongs.map(song => song.id));
-      const uniqueNewSongs = results.filter(song => !existingIds.has(song.id));
+      const existingKeys = new Set(prevSongs.map(getSongKey));
+
+      const uniqueNewSongs = results.filter(song => {
+        if (existingIds.has(song.id)) return false;
+        
+        const key = getSongKey(song);
+        // If a song with the exact same name and artist is already present, skip it
+        if (existingKeys.has(key) && key !== "|") return false;
+        
+        existingKeys.add(key);
+        existingIds.add(song.id);
+        return true;
+      });
+
       return [...prevSongs, ...uniqueNewSongs];
     });
     
