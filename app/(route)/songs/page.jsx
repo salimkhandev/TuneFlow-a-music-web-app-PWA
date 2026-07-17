@@ -33,7 +33,10 @@ const Page = () => {
     setSongs((prevSongs) => {
       const getSongKey = (song) => {
         const name = song?.name?.toLowerCase().trim() || "";
-        const artist = song?.artists?.primary?.map(a => a.name).join(",").toLowerCase().trim() || "";
+        const primaryArtists = song?.artists?.primary;
+        const artist = Array.isArray(primaryArtists) 
+          ? primaryArtists.map(a => a?.name || "").join(",").toLowerCase().trim() 
+          : "";
         return `${name}|${artist}`;
       };
 

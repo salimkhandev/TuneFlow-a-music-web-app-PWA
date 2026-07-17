@@ -50,7 +50,7 @@ self.addEventListener('activate', (event) => {
 
 // Updated fetch event handler with proper dynamic caching
 self.addEventListener('fetch', (event) => {
-//   console.log('🚀 Fetch event:', event.request.url);
+  //   console.log('🚀 Fetch event:', event.request.url);
 
   // Skip non-GET requests and non-same-origin requests
   if (
