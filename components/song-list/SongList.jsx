@@ -56,7 +56,7 @@ const SongItem = memo(({
           </Button>
         </div>
         <div>
-          <p className="font-medium line-clamp-1">{song.name}</p>
+          <p className="font-medium line-clamp-1">{decodeHtmlEntities(song.name)}</p>
           <p className="text-sm text-muted-foreground space-x-2 line-clamp-2">
             {song.artists?.primary
               ?.map((artist) => decodeHtmlEntities(artist.name))

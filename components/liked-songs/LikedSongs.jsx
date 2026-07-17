@@ -535,7 +535,7 @@ const LikedSongs = () => {
                   />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{song.name}</p>
+                  <p className="font-medium truncate">{decodeHtmlEntities(song.name)}</p>
                   <p className="text-sm text-muted-foreground truncate">
                     {song.artists?.primary?.length > 0 
                       ? song.artists.primary.map(artist => decodeHtmlEntities(artist.name)).join(", ")
@@ -620,14 +620,14 @@ const LikedSongs = () => {
                 </div>
                 
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{song.name}</p>
+                  <p className="font-medium truncate">{decodeHtmlEntities(song.name)}</p>
                   <p className="text-sm text-muted-foreground truncate">
                     {song.artists?.primary?.length > 0 
                       ? song.artists.primary.map(artist => decodeHtmlEntities(artist.name)).join(", ")
                       : "Unknown Artist"}
                   </p>
                   <p className="text-xs text-muted-foreground truncate">
-                    {song.album?.name || "Unknown Album"}
+                    {decodeHtmlEntities(song.album?.name) || "Unknown Album"}
                   </p>
                 </div>
                 
