@@ -393,7 +393,8 @@ const Header = () => {
               </div>
             )}
           </div>
-          <ScrollArea className="flex-1 h-[60vh] md:h-[500px] pr-2 sm:pr-4 mt-2 sm:mt-4">
+          {/* Scrollable results — native div so mobile touch scroll works */}
+          <div className="flex-1 min-h-0 overflow-y-auto pr-1 sm:pr-3 mt-2 sm:mt-4 pb-2">
             
             {!query.trim() && searchSuggestions.length === 0 && (
               <div className="flex flex-col items-center justify-center h-full text-center py-16 opacity-60">
@@ -439,7 +440,18 @@ const Header = () => {
                 {isLoadingAlbums ? <Loader /> : <AlbumsList albums={albums} onItemClick={() => setIsOpenSearchDialog(false)} />}
               </div>
             )}
-          </ScrollArea>
+          </div>
+
+          {/* Always-visible close button at the bottom for mobile */}
+          <div className="pt-2 border-t mt-1">
+            <Button
+              variant="ghost"
+              className="w-full text-muted-foreground"
+              onClick={() => setIsOpenSearchDialog(false)}
+            >
+              <X className="h-4 w-4 mr-2" /> Close
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </header>

@@ -37,9 +37,9 @@ const SongItem = memo(({
       <div  className="flex items-center gap-2">
         <div className="relative">
           <img
-            src={song.image[song.image.length - 1].url}
-            alt={song.title}
-            className="min-w-16 h-16 rounded-md object-cover"
+            src={song.image?.[song.image.length - 1]?.url || song.image?.[0]?.url || ''}
+            alt={song.name || 'Song'}
+            className="min-w-16 h-16 rounded-md object-cover bg-muted"
           />
           {/* Play/Pause button */}
           <Button
@@ -58,8 +58,8 @@ const SongItem = memo(({
         <div>
           <p className="font-medium line-clamp-1">{song.name}</p>
           <p className="text-sm text-muted-foreground space-x-2 line-clamp-2">
-            {song.artists.primary
-              .map((artist) => decodeHtmlEntities(artist.name))
+            {song.artists?.primary
+              ?.map((artist) => decodeHtmlEntities(artist.name))
               .join(", ")}
           </p>
         </div>
