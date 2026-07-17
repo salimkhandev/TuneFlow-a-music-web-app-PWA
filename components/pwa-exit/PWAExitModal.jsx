@@ -8,13 +8,24 @@ export default function PWAExitModal() {
   // Ref mirrors state so the event handler (closed over on mount) always sees
   // the latest value without needing to re-register.
   const showRef = useRef(false);
+  // Blocks backdrop/button clicks for a short window after the modal opens,
+  // preventing the ghost-click from the hardware back button from instantly
+  // dismissing the modal.
+  const readyRef = useRef(false);
+  const readyTimer = useRef(null);
 
   const openModal = () => {
     showRef.current = true;
+    readyRef.current = false;
     setShow(true);
+    // Allow interactions only after 400 ms — enough to swallow the ghost click
+    // that the OS fires alongside the hardware back-button press.
+    clearTimeout(readyTimer.current);
+    readyTimer.current = setTimeout(() => { readyRef.current = true; }, 400);
   };
 
   const closeModal = () => {
+    if (!readyRef.current) return; // still in the deaf window
     showRef.current = false;
     setShow(false);
   };
@@ -76,15 +87,9 @@ export default function PWAExitModal() {
   if (!show) return null;
 
   return (
-    // Tap outside = cancel
-    <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-6 backdrop-blur-sm"
-      onClick={cancelExit}
-    >
-      <div
-        className="bg-card w-full max-w-sm rounded-2xl p-6 shadow-2xl border border-border"
-        onClick={(e) => e.stopPropagation()}
-      >
+    // No tap-outside-to-cancel: only the explicit buttons should act
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-6 backdrop-blur-sm">
+      <div className="bg-card w-full max-w-sm rounded-2xl p-6 shadow-2xl border border-border">
         <h2 className="text-xl font-bold mb-2 text-foreground">Exit App?</h2>
         <p className="text-muted-foreground mb-6">
           Are you sure you want to close Tune Flow?
