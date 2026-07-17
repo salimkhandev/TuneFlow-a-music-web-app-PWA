@@ -1,6 +1,6 @@
 // self.__WB_MANIFEST
 
-const CACHE_VERSION = 'v87';
+const CACHE_VERSION = 'v88';
 const CACHE_NAME = `app-cache-${CACHE_VERSION}`;
 
 const FILES_TO_CACHE = [
