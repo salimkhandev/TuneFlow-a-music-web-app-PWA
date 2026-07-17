@@ -75,30 +75,39 @@ const FullScreenPlayer = ({ onClose }) => {
       document.removeEventListener('keydown', handleUserInteraction);
     };
   }, []);
+  // Store onClose in a ref so we don't trigger effect re-runs when it changes
+  const onCloseRef = useRef(onClose);
   useEffect(() => {
-    // Push a hash state. Next.js safely ignores hash changes, so this won't
-    // trigger a hard refresh when the hardware back button is pressed.
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  useEffect(() => {
+    // Push a hash entry so the back button creates a popstate event instead
+    // of navigating away. Hash changes are URL-safe with Next.js.
     if (window.location.hash !== "#fs") {
       window.history.pushState(null, "", window.location.pathname + window.location.search + "#fs");
     }
 
-    const handlePopState = () => {
-      // If the hash is gone, the user pressed the back button.
+    const handlePopState = (e) => {
       if (window.location.hash !== "#fs") {
-        onClose();
+        // Capture phase + stopImmediatePropagation ensures Next.js never sees
+        // this event and never triggers a page refresh or route change.
+        e.stopImmediatePropagation();
+        onCloseRef.current();
       }
     };
 
-    window.addEventListener("popstate", handlePopState);
+    // MUST be capture phase so we run BEFORE Next.js App Router's popstate handler
+    window.addEventListener("popstate", handlePopState, true);
 
     return () => {
-      window.removeEventListener("popstate", handlePopState);
-      // Clean up the hash if the player is closed programmatically
+      window.removeEventListener("popstate", handlePopState, true);
+      // Pop the #fs hash cleanly when player is closed via on-screen button
       if (window.location.hash === "#fs") {
         window.history.back();
       }
     };
-  }, [onClose]);
+  }, []);
 
   // RTK Query: read liked songs when user is authenticated
   const shouldFetchLiked = Boolean(session?.user?.email);
