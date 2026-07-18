@@ -290,12 +290,11 @@ const Player = () => {
 
   // Handle song ending - play next song
   const handleSongEnd = () => {
-    // Always read from ref — avoids stale closure on the audio `onEnded` event
     const mode = repeatModeRef.current;
     dispatch(setProgress(0));
 
-    if (mode === 2) {
-      // Repeat One — restart current track directly
+    if (mode === 1) {
+      // Loop ON — restart current song directly
       if (audioRef.current) {
         audioRef.current.currentTime = 0;
         audioRef.current.play().catch(() => {});
@@ -303,17 +302,12 @@ const Player = () => {
       return;
     }
 
+    // Loop OFF — advance or stop
     if (queue.length > 0) {
-      if (mode === 1) {
-        // Repeat All — wrap back to start of queue
+      if (queueIndex < queue.length - 1) {
         dispatch(nextSong());
       } else {
-        // No Repeat — advance or stop
-        if (queueIndex < queue.length - 1) {
-          dispatch(nextSong());
-        } else {
-          dispatch(togglePlayPause());
-        }
+        dispatch(togglePlayPause());
       }
     }
   };

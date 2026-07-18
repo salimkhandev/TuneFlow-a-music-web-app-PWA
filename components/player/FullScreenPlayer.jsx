@@ -451,13 +451,10 @@ const FullScreenPlayer = ({ onClose }) => {
             variant="ghost" 
             size="icon" 
             onClick={() => dispatch(toggleRepeatMode())}
-            className={`${repeatMode !== 0 ? 'text-primary' : 'text-muted-foreground'} hover:text-foreground hover:bg-transparent relative`}
+            className={`${repeatMode !== 0 ? 'text-primary' : 'text-muted-foreground'} hover:text-foreground hover:bg-transparent`}
+            aria-label={repeatMode !== 0 ? "Loop on" : "Loop off"}
           >
-            {repeatMode === 2 ? (
-              <Repeat1 className="h-5 w-5" />
-            ) : (
-              <Repeat className="h-5 w-5" />
-            )}
+            <Repeat1 className="h-5 w-5" />
           </Button>
         </div>
 
