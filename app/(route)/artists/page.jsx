@@ -9,7 +9,7 @@ const Page = () => {
   const [isLoadingArtists, setIsLoadingArtists] = useState(false);
   const [artists, setArtists] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [currentQuery, setCurrentQuery] = useState("top artists");
+  const [currentQuery, setCurrentQuery] = useState("arijit singh");
   const [limit, setLimit] = useState(50);
 
   const handleFetchArtists = async (query, page = 1) => {

@@ -75,8 +75,8 @@ const HomePage = () => {
 
   useEffect(() => {
     const artistQueries = ["arijit singh", "taylor swift", "the weeknd", "shreya ghoshal", "ed sheeran", "ar rahman"];
-    const songQueries = ["trending songs", "top hits", "latest hits", "viral songs"];
-    const albumQueries = ["new releases", "top albums", "trending albums"];
+    const songQueries = ["bollywood hits", "english pop", "punjabi hits", "lofi chill", "latest punjabi"];
+    const albumQueries = ["bollywood 2024", "english hits", "lofi mix"];
 
     const randomArtistQuery = artistQueries[Math.floor(Math.random() * artistQueries.length)];
     const randomSongQuery = songQueries[Math.floor(Math.random() * songQueries.length)];

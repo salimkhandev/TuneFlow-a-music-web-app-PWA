@@ -16,7 +16,7 @@ const Page = () => {
   const [isLoadingSongs, setIsLoadingSongs] = useState(false);
   const [songs, setSongs] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [currentQuery, setCurrentQuery] = useState("trending hits");
+  const [currentQuery, setCurrentQuery] = useState("bollywood hits");
   const [limit, setLimit] = useState(50);
   const shouldFetchLiked = Boolean(session?.user?.email);
   const { data: likedData } = useGetLikedSongsQuery(undefined, { skip: !shouldFetchLiked });

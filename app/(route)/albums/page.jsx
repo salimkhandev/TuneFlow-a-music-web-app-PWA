@@ -9,7 +9,7 @@ const Page = () => {
   const [isLoadingAlbums, setIsLoadingAlbums] = useState(false);
   const [albums, setAlbums] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [currentQuery, setCurrentQuery] = useState("new albums");
+  const [currentQuery, setCurrentQuery] = useState("bollywood 2024");
   const [limit, setLimit] = useState(50);
 
   const handleFetchAlbums = async (query, page = 1) => {
