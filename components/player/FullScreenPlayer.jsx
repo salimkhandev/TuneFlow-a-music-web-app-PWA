@@ -454,7 +454,11 @@ const FullScreenPlayer = ({ onClose }) => {
             className={`${repeatMode !== 0 ? 'text-primary' : 'text-muted-foreground'} hover:text-foreground hover:bg-transparent`}
             aria-label={repeatMode !== 0 ? "Loop on" : "Loop off"}
           >
-            <Repeat1 className="h-5 w-5" />
+            {repeatMode !== 0 ? (
+              <Repeat1 className="h-5 w-5" />
+            ) : (
+              <Repeat className="h-5 w-5" />
+            )}
           </Button>
         </div>
 
