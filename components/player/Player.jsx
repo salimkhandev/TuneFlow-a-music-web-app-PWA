@@ -295,15 +295,10 @@ const Player = () => {
     dispatch(setProgress(0));
 
     if (mode === 1) {
-      // Repeat All
-      if (queue.length === 1) {
-        // Single-song queue: currentSong ref won't change, so restart audio directly
-        if (audioRef.current) {
-          audioRef.current.currentTime = 0;
-          audioRef.current.play().catch(() => {});
-        }
-      } else {
-        dispatch(nextSong());
+      // Repeat One — restart the current track directly
+      if (audioRef.current) {
+        audioRef.current.currentTime = 0;
+        audioRef.current.play().catch(() => {});
       }
       return;
     }
