@@ -338,6 +338,14 @@ const Header = () => {
               placeholder="What do you want to listen to?"
               value={query}
               onChange={(e) => handleSearchChange(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  setShowSuggestions(false);
+                  e.target.blur(); // Hides keyboard on mobile
+                } else if (e.key === "Escape") {
+                  setShowSuggestions(false);
+                }
+              }}
               className="pl-10 pr-10 py-6 text-base sm:text-lg rounded-xl bg-muted/50 border-border/50 focus-visible:ring-1 focus-visible:ring-primary/50 transition-all"
             />
             {query && (
