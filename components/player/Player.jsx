@@ -294,8 +294,8 @@ const Player = () => {
     const mode = repeatModeRef.current;
     dispatch(setProgress(0));
 
-    if (mode === 1) {
-      // Repeat One — restart the current track directly
+    if (mode === 2) {
+      // Repeat One — restart current track directly
       if (audioRef.current) {
         audioRef.current.currentTime = 0;
         audioRef.current.play().catch(() => {});
@@ -303,12 +303,17 @@ const Player = () => {
       return;
     }
 
-    // No repeat — advance or stop
     if (queue.length > 0) {
-      if (queueIndex < queue.length - 1) {
+      if (mode === 1) {
+        // Repeat All — wrap back to start of queue
         dispatch(nextSong());
       } else {
-        dispatch(togglePlayPause());
+        // No Repeat — advance or stop
+        if (queueIndex < queue.length - 1) {
+          dispatch(nextSong());
+        } else {
+          dispatch(togglePlayPause());
+        }
       }
     }
   };

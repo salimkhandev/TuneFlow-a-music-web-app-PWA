@@ -453,7 +453,7 @@ const FullScreenPlayer = ({ onClose }) => {
             onClick={() => dispatch(toggleRepeatMode())}
             className={`${repeatMode !== 0 ? 'text-primary' : 'text-muted-foreground'} hover:text-foreground hover:bg-transparent relative`}
           >
-            {repeatMode === 1 ? (
+            {repeatMode === 2 ? (
               <Repeat1 className="h-5 w-5" />
             ) : (
               <Repeat className="h-5 w-5" />
