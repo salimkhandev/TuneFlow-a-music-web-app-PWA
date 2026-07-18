@@ -1,12 +1,11 @@
 // self.__WB_MANIFEST
 
-const CACHE_VERSION = 'v97';
+const CACHE_VERSION = 'v99';
 const CACHE_NAME = `app-cache-${CACHE_VERSION}`;
 
 const FILES_TO_CACHE = [
   '/',
   '/manifest',
-  '/about',
 ];
 
 // Install event: Cache assets
