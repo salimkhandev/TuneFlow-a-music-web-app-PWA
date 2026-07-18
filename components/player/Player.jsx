@@ -46,6 +46,8 @@ const Player = () => {
   const isLoadingRef = useRef(false);
   const pendingPlayRef = useRef(false);
   const lastDispatchedProgressRef = useRef(progress);
+  // Keep a ref in sync so handleSongEnd never captures a stale repeatMode
+  const repeatModeRef = useRef(repeatMode);
   const [localProgress, setLocalProgress] = useState(0);
   const [isClient, setIsClient] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
@@ -62,6 +64,11 @@ const Player = () => {
     setIsHydrated(true);
     setLocalProgress(progress);
   }, [progress]);
+
+  // Keep repeatModeRef current on every render
+  useEffect(() => {
+    repeatModeRef.current = repeatMode;
+  }, [repeatMode]);
 
   // Reset local progress when current song changes
   useEffect(() => {
@@ -283,28 +290,30 @@ const Player = () => {
 
   // Handle song ending - play next song
   const handleSongEnd = () => {
+    // Always read from ref — avoids stale closure on the audio `onEnded` event
+    const mode = repeatModeRef.current;
     dispatch(setProgress(0));
-    
-    if (repeatMode === 2) {
-      // Repeat One
-      if (audioRef.current) {
-        audioRef.current.currentTime = 0;
-        audioRef.current.play().catch(() => {});
+
+    if (mode === 1) {
+      // Repeat All
+      if (queue.length === 1) {
+        // Single-song queue: currentSong ref won't change, so restart audio directly
+        if (audioRef.current) {
+          audioRef.current.currentTime = 0;
+          audioRef.current.play().catch(() => {});
+        }
+      } else {
+        dispatch(nextSong());
       }
       return;
     }
 
+    // No repeat — advance or stop
     if (queue.length > 0) {
-      if (repeatMode === 1) {
-        // Repeat All
+      if (queueIndex < queue.length - 1) {
         dispatch(nextSong());
       } else {
-        // No Repeat - only go to next if not at the end
-        if (queueIndex < queue.length - 1) {
-          dispatch(nextSong());
-        } else {
-          dispatch(togglePlayPause());
-        }
+        dispatch(togglePlayPause());
       }
     }
   };
