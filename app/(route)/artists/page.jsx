@@ -8,12 +8,13 @@ import { useEffect, useState } from "react";
 const Page = () => {
   const [isLoadingArtists, setIsLoadingArtists] = useState(false);
   const [artists, setArtists] = useState([]);
-  const [currentQuery, setCurrentQuery] = useState("a"); // Start with 'a'
+  const [currentPage, setCurrentPage] = useState(1);
+  const [currentQuery, setCurrentQuery] = useState("top artists");
   const [limit, setLimit] = useState(50);
 
-  const handleFetchArtists = async (query) => {
+  const handleFetchArtists = async (query, page = 1) => {
     setIsLoadingArtists(true);
-    const newArtists = await fetchArtists({ query, limit });
+    const newArtists = await fetchArtists({ query, page, limit });
     const results = newArtists?.data?.results || [];
     // Filter out artists with default/placeholder images or missing image
     const filtered = results.filter((a) => {
@@ -28,15 +29,15 @@ const Page = () => {
   };
 
   useEffect(() => {
-    handleFetchArtists(currentQuery);
+    handleFetchArtists(currentQuery, currentPage);
   }, []);
 
-  const loadMorePlaylists = () => {
-    if (currentQuery >= "z") return; // Stop at 'z'
+  const loadMoreArtists = () => {
+    if (currentPage >= 10) return; // Prevent excessive loading
 
-    const nextQuery = String.fromCharCode(currentQuery.charCodeAt(0) + 1); // Increment alphabet
-    setCurrentQuery(nextQuery);
-    handleFetchArtists(nextQuery);
+    const nextPage = currentPage + 1;
+    setCurrentPage(nextPage);
+    handleFetchArtists(currentQuery, nextPage);
   };
 
   return (
@@ -52,7 +53,7 @@ const Page = () => {
             ))}
           </div>
           <div className="flex justify-center">
-            <Button onClick={loadMorePlaylists} disabled={currentQuery >= "z"}>
+            <Button onClick={loadMoreArtists} disabled={currentPage >= 10 || isLoadingArtists}>
               Load More Songs
             </Button>
           </div>

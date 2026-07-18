@@ -74,9 +74,17 @@ const HomePage = () => {
   }, []);
 
   useEffect(() => {
-    handleFetchArtists({ query: "a", limit: 15 });
-    handleFetchSongs({ query: "a", limit: 6 });
-    handleFetchAlbums({ query: "a", limit: 16 });
+    const artistQueries = ["arijit singh", "taylor swift", "the weeknd", "shreya ghoshal", "ed sheeran", "ar rahman"];
+    const songQueries = ["trending songs", "top hits", "latest hits", "viral songs"];
+    const albumQueries = ["new releases", "top albums", "trending albums"];
+
+    const randomArtistQuery = artistQueries[Math.floor(Math.random() * artistQueries.length)];
+    const randomSongQuery = songQueries[Math.floor(Math.random() * songQueries.length)];
+    const randomAlbumQuery = albumQueries[Math.floor(Math.random() * albumQueries.length)];
+
+    handleFetchArtists({ query: randomArtistQuery, limit: 15 });
+    handleFetchSongs({ query: randomSongQuery, limit: 6 });
+    handleFetchAlbums({ query: randomAlbumQuery, limit: 16 });
   }, []);
 
   // liked songs provided by RTK Query above

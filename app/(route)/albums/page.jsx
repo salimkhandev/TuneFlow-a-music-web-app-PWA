@@ -8,27 +8,28 @@ import React, { useEffect, useState } from "react";
 const Page = () => {
   const [isLoadingAlbums, setIsLoadingAlbums] = useState(false);
   const [albums, setAlbums] = useState([]);
-  const [currentQuery, setCurrentQuery] = useState("a"); // Start with 'a'
+  const [currentPage, setCurrentPage] = useState(1);
+  const [currentQuery, setCurrentQuery] = useState("new albums");
   const [limit, setLimit] = useState(50);
 
-  const handleFetchAlbums = async (query) => {
+  const handleFetchAlbums = async (query, page = 1) => {
     setIsLoadingAlbums(true);
-    const newAlbums = await fetchAlbums({ query, limit });
+    const newAlbums = await fetchAlbums({ query, page, limit });
     const results = newAlbums?.data?.results;
     setAlbums((prevAlbums) => [...prevAlbums, ...results]); // Append new playlists
     setIsLoadingAlbums(false);
   };
 
   useEffect(() => {
-    handleFetchAlbums(currentQuery);
+    handleFetchAlbums(currentQuery, currentPage);
   }, []);
 
-  const loadMorePlaylists = () => {
-    if (currentQuery >= "z") return; // Stop at 'z'
+  const loadMoreAlbums = () => {
+    if (currentPage >= 10) return; // Prevent excessive loading
 
-    const nextQuery = String.fromCharCode(currentQuery.charCodeAt(0) + 1); // Increment alphabet
-    setCurrentQuery(nextQuery);
-    handleFetchAlbums(nextQuery);
+    const nextPage = currentPage + 1;
+    setCurrentPage(nextPage);
+    handleFetchAlbums(currentQuery, nextPage);
   };
 
   return (
@@ -40,7 +41,7 @@ const Page = () => {
         <>
           <AlbumsList albums={albums} />
           <div className="flex justify-center">
-            <Button onClick={loadMorePlaylists} disabled={currentQuery >= "z"}>
+            <Button onClick={loadMoreAlbums} disabled={currentPage >= 10 || isLoadingAlbums}>
               Load More Songs
             </Button>
           </div>

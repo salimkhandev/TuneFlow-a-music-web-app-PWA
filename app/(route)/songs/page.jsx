@@ -15,7 +15,8 @@ const Page = () => {
   const { data: session } = useSession();
   const [isLoadingSongs, setIsLoadingSongs] = useState(false);
   const [songs, setSongs] = useState([]);
-  const [currentQuery, setCurrentQuery] = useState("a"); // Start with 'a'
+  const [currentPage, setCurrentPage] = useState(1);
+  const [currentQuery, setCurrentQuery] = useState("trending hits");
   const [limit, setLimit] = useState(50);
   const shouldFetchLiked = Boolean(session?.user?.email);
   const { data: likedData } = useGetLikedSongsQuery(undefined, { skip: !shouldFetchLiked });
@@ -24,9 +25,9 @@ const Page = () => {
   const [ unlikeSong ] = useUnlikeSongMutation();
   const [isClient, setIsClient] = useState(false);
 
-  const handleFetchSongs = async (query) => {
+  const handleFetchSongs = async (query, page = 1) => {
     setIsLoadingSongs(true);
-    const newSongs = await fetchSongs({ query, limit });
+    const newSongs = await fetchSongs({ query, page, limit });
     const results = newSongs?.data?.results || [];
     
     // Filter out duplicate songs based on ID and Title + Artist
@@ -66,17 +67,17 @@ const Page = () => {
   }, []);
 
   useEffect(() => {
-    handleFetchSongs(currentQuery);
+    handleFetchSongs(currentQuery, currentPage);
   }, []);
 
   // liked songs are sourced via RTK Query above
 
   const loadMoreSongs = () => {
-    if (currentQuery >= "z") return; // Stop at 'z'
+    if (currentPage >= 10) return; // Prevent excessive loading
 
-    const nextQuery = String.fromCharCode(currentQuery.charCodeAt(0) + 1); // Increment alphabet
-    setCurrentQuery(nextQuery);
-    handleFetchSongs(nextQuery);
+    const nextPage = currentPage + 1;
+    setCurrentPage(nextPage);
+    handleFetchSongs(currentQuery, nextPage);
   };
 
   const handleToggleLike = async (song) => {
@@ -120,7 +121,7 @@ const Page = () => {
         <div className="flex flex-col items-center justify-center py-20 text-center gap-4">
           <p className="text-xl font-semibold text-muted-foreground">No songs found.</p>
           <p className="text-sm text-muted-foreground">The music API might be temporarily down or experiencing issues.</p>
-          <Button onClick={() => handleFetchSongs(currentQuery)} variant="outline">
+          <Button onClick={() => handleFetchSongs(currentQuery, currentPage)} variant="outline">
             Try Again
           </Button>
         </div>
@@ -134,7 +135,7 @@ const Page = () => {
             onDownload={handleDownload}
           />
           <div className="flex justify-center">
-            <Button onClick={loadMoreSongs} disabled={currentQuery >= "z"}>
+            <Button onClick={loadMoreSongs} disabled={currentPage >= 10 || isLoadingSongs}>
               Load More Songs
             </Button>
           </div>
