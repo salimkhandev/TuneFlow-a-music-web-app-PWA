@@ -215,12 +215,7 @@ const Player = () => {
   // 🚨 REMOVED: Duplicate audio loading logic that was causing conflicts
   // The audio loading is now handled only in the effect above
 
-  // Handle volume changes
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = isMuted ? 0 : volume / 100;
-    }
-  }, [volume, isMuted]);
+
 
   // Mirror global isPlaying to the single audio element (no reloads here)
   useEffect(() => {
@@ -485,18 +480,8 @@ const Player = () => {
             </Button>
           </div>
 
-          {/* Right: Volume Control */}
+          {/* Right: Close Player */}
           <div className="hidden sm:flex items-center gap-2 flex-1 justify-end" onClick={(e) => e.stopPropagation()}>
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => dispatch(toggleMute())}>
-               {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
-            </Button>
-            <Slider
-              className="w-24"
-              value={[volume]}
-              onValueChange={(value) => dispatch(setVolume(value[0]))}
-              max={100}
-              step={1}
-            />
             <Button
               variant="ghost"
               size="icon"

@@ -453,19 +453,12 @@ const FullScreenPlayer = ({ onClose }) => {
             onClick={() => dispatch(toggleRepeatMode())}
             className={`${repeatMode !== 0 ? 'text-primary' : 'text-muted-foreground'} hover:text-foreground hover:bg-transparent relative`}
           >
-            {repeatMode === 2 ? (
-              <Repeat1 className="h-5 w-5" />
-            ) : (
-              <Repeat className="h-5 w-5" />
-            )}
+            <Repeat className="h-5 w-5" />
           </Button>
         </div>
 
-        {/* Secondary Actions (Like, Volume) */}
+        {/* Secondary Actions (Like) */}
         <div className="flex items-center justify-center gap-12 w-full max-w-[240px] flex-shrink-0">
-          <Button variant="ghost" size="icon" onClick={() => dispatch(toggleMute())} className="text-muted-foreground hover:text-foreground">
-            {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
-          </Button>
 
           {isOnline ? (
             <Button
